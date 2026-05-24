@@ -1,5 +1,7 @@
 # Nutrify – Pengenalan Makanan & Penjadwal Nutrisi Harian
 
+Sumber : https://repository.stikespersadanabire.ac.id/assets/upload/files/docs_1690780458.pdf
+
 Nutrify adalah sistem yang bisa foto makanan, tahu apa isinya, perkirakan porsinya, lalu hitung kalori dan makronya. Setelah itu, angka-angka tadi dibandingkan dengan target kalori harian kamu dan sistemnya langsung bilang apakah makanan itu cocok dengan tujuanmu (turun berat, nambah massa otot, atau maintain).
 
 Ada tiga bagian utama: Flutter (kamera + tampilan aplikasi), FastAPI (backend + orkestrasi ML), dan pipeline ML multi-model (deteksi + klasifikasi + kalkulasi nutrisi).
