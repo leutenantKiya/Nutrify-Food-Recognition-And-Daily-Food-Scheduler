@@ -1,0 +1,8 @@
+{
+    "extraPaths": [
+        "Machine Learning/food_detection"
+    ],
+    "venvPath": ".",
+    "venv": "venv",
+    "pythonVersion": "3.13"
+}

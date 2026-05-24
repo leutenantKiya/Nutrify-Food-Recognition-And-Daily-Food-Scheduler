@@ -1,0 +1,39 @@
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Temporary and Upload Directories (only raw user upload caches)
+temp_image_POST/
+uploads/
+
+# Kaggle runtime artifacts (duplikat, bukan source asli)
+results/_output_/nutrifile/
+
+# Python cache & build files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.cache/
+.ipynb_checkpoints/
+
+# Notebook generator (internal tool, notebooks committed as-is)
+_build_notebooks.py
+
+# Internal test suite & config (dev-only)
+tests/
+pytest.ini
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# IDE & System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

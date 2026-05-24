@@ -1,11 +1,10 @@
 """
-Knowledge base: dish → expected hidden ingredients.
+Tabel lookup: hidangan -> bahan tersembunyi yang biasanya ada di dalamnya.
 
-When the pipeline detects a dish (e.g. fried_rice), it knows that the dish
-*inherently* contains ingredients that are NOT visible in the image.
+Waktu pipeline mendeteksi hidangan (misal fried_rice), kita tahu bahwa
+ada bahan-bahan yang TIDAK terlihat di foto tapi pasti ada di makanan itu.
 
-This mapping powers the `estimated_hidden_ingredients` field in the API
-response, making nutrition estimation much more realistic.
+Pemetaan ini mengisi field `estimated_hidden_ingredients` di respons API.
 """
 
 from __future__ import annotations

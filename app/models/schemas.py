@@ -1,7 +1,5 @@
 """
-Pydantic models for all request/response shapes.
-
-Designed for clean structured JSON — no flat text logs.
+Pydantic models for request and response shapes.
 """
 
 from __future__ import annotations
@@ -12,9 +10,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Request models
-# ══════════════════════════════════════════════════════════════════════
+# ── request models ──────────────────────────────────────────────────────
 
 class NutritionGoal(str, Enum):
     weight_loss = "weight_loss"
@@ -35,21 +31,26 @@ class ActivityLevel(str, Enum):
     very_active = "very_active"
 
 
-class ChatMessage(BaseModel):
-    role: str = Field(..., description="'user' or 'model'")
-    content: str
 
-
-class ChatRequest(BaseModel):
-    message: str = Field(..., description="User message text")
-    history: List[ChatMessage] = Field(
-        default_factory=list,
-        description="Previous conversation messages"
+class MealAnalysisBlobRequest(BaseModel):
+    """Request model for /analyze_meal/blob — accepts base64-encoded image."""
+    image_blob: str = Field(
+        ...,
+        description="Base64-encoded image data (JPEG/PNG). Can include the data-URI prefix (e.g. 'data:image/png;base64,...') or be raw base64."
     )
-    # Optional context from a previous meal analysis
-    meal_context: Optional[dict] = Field(
-        None,
-        description="Attach the most recent /analyze_meal response so the model can reference it"
+    goal: NutritionGoal = Field(..., description="Nutrition goal")
+    weight: float = Field(..., gt=0, description="Body weight in kg")
+    height: float = Field(..., gt=0, description="Height in cm")
+    age: int = Field(..., gt=0, description="Age in years")
+    gender: Gender = Field(..., description="Gender: male | female")
+    activity_level: ActivityLevel = Field(
+        ActivityLevel.moderate,
+        description="Activity level"
+    )
+    daily_target: float = Field(
+        0,
+        ge=0,
+        description="Custom daily calorie target (0 = auto-calculate from biometrics)"
     )
 
 
@@ -119,14 +120,6 @@ class MealAnalysisResponse(BaseModel):
     explanation: str = ""
     images: dict = Field(default_factory=dict)
 
-
-class ChatResponse(BaseModel):
-    status: str = "success"
-    reply: str
-    suggestions: List[str] = Field(
-        default_factory=list,
-        description="Quick-reply suggestions the UI can show as chips"
-    )
 
 
 class ErrorResponse(BaseModel):

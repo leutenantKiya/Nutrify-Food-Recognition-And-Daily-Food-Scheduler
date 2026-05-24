@@ -1,8 +1,8 @@
 """
-Central configuration — loaded once on startup.
+Konfigurasi utama, dimuat sekali saat startup.
 
-Environment variables override defaults:
-    NUTRIFILE_WEIGHTS_DIR, NUTRIFILE_UPLOAD_DIR, NUTRIFILE_CHAT_API_KEY, etc.
+Environment variable bisa override default:
+    NUTRIFILE_WEIGHTS_DIR, NUTRIFILE_UPLOAD_DIR, dll.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ _OUTPUT_DIR = _PROJECT_ROOT / "results" / "_output_"
 
 
 class Settings(BaseSettings):
-    """Immutable application settings (validated on startup)."""
+    """Setting aplikasi (divalidasi saat startup)."""
 
     # ── FastAPI ───────────────────────────────────────────────────────
     app_title: str = "NutriFile API"
@@ -38,9 +38,7 @@ class Settings(BaseSettings):
     upload_dir: Path = _PROJECT_ROOT / "uploads"
     max_image_size_mb: int = 10
 
-    # ── Chat endpoint (external AI model) ────────────────────────────
-    chat_api_url: str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-    chat_api_key: str = ""   # set via NUTRIFILE_CHAT_API_KEY env var
+
 
     # ── Pipeline defaults ────────────────────────────────────────────
     default_daily_target: float = 2000.0

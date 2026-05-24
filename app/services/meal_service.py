@@ -1,14 +1,8 @@
 """
-Meal analysis service — the brain of /analyze_meal.
+Meal analysis service -- this is where /analyze_meal actually runs.
 
-Orchestrates:
-  1. Image saving
-  2. Pipeline execution (NutriFilePipeline)
-  3. Annotated image generation
-  4. Structured JSON assembly
-  5. Knowledge inference (hidden ingredients)
-  6. Goal-aware reasoning
-  7. TDEE calculation from biometrics
+Flow: save image -> calculate TDEE -> run ML pipeline -> draw annotations
+-> collect hidden ingredients -> build JSON response.
 """
 
 from __future__ import annotations
@@ -43,9 +37,7 @@ from app.models.schemas import (
 )
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TDEE (Total Daily Energy Expenditure) calculator
-# ══════════════════════════════════════════════════════════════════════
+# ── TDEE (kalori harian) ─────────────────────────────────────────────
 
 ACTIVITY_MULTIPLIERS = {
     "sedentary":   1.2,
@@ -65,9 +57,8 @@ def calculate_tdee(
     goal: str,
 ) -> float:
     """
-    Mifflin-St Jeor equation → TDEE → goal-adjusted daily target.
-
-    Returns daily kcal target.
+    Hitung target kalori harian pakai rumus Mifflin-St Jeor, lalu sesuaikan
+    berdasarkan goal (deficit 500 kcal untuk weight_loss, surplus 300 untuk muscle_gain).
     """
     if gender == "male":
         bmr = 10 * weight + 6.25 * height - 5 * age + 5
@@ -84,9 +75,7 @@ def calculate_tdee(
     return tdee  # maintenance
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Singleton pipeline loader
-# ══════════════════════════════════════════════════════════════════════
+# ── pipeline singleton ──────────────────────────────────────────────
 
 _pipeline: Optional[NutriFilePipeline] = None
 
@@ -105,9 +94,7 @@ def _get_pipeline() -> NutriFilePipeline:
     return _pipeline
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Image I/O
-# ══════════════════════════════════════════════════════════════════════
+# ── image I/O ───────────────────────────────────────────────────────
 
 def save_upload(image_bytes: bytes, ext: str = ".jpg") -> tuple[Path, str]:
     """Save uploaded bytes; return (full_path, relative_url)."""
@@ -170,9 +157,7 @@ def render_annotated(image_rgb: np.ndarray, result: PipelineResult) -> tuple[Pat
     return full_path, f"/uploads/{filename}"
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Helpers
-# ══════════════════════════════════════════════════════════════════════
+# ── helpers ─────────────────────────────────────────────────────────
 
 def _classify_portion_size(grams: float) -> str:
     if grams < 100:
@@ -184,28 +169,27 @@ def _classify_portion_size(grams: float) -> str:
 
 def _find_dish_detection(detections: list[Detection]) -> Optional[Detection]:
     """
-    Find the primary dish detection.
+    Cari deteksi utama yang paling mirip "hidangan" (bukan bahan tunggal).
 
-    Priority order:
-      1. "dish" source detections (actual dish classifier: fried_rice, pizza, etc.)
-         — sorted by mask_area_ratio * score to prefer large, confident dish regions
-      2. "coco" detections that are composite dishes (pizza, sandwich, hot_dog, cake, donut)
-      3. Largest detection by mask area as fallback
+    Urutan prioritas:
+      1. Deteksi dari dish classifier (fried_rice, pizza, dll.)
+      2. Deteksi COCO yang memang hidangan utuh (pizza, sandwich, hot_dog, cake, donut)
+      3. Fallback: deteksi dengan area mask terbesar
     """
-    # Composite COCO labels that represent full dishes (not single ingredients)
+    # label COCO yang merepresentasikan hidangan utuh (bukan bahan tunggal)
     COCO_DISH_LABELS = {"pizza", "club_sandwich", "hot_dog", "donuts", "chocolate_cake"}
 
-    # Priority 1: actual dish classifier hits
+    # 1: dari dish classifier
     dish_source_dets = [d for d in detections if d.label_source == "dish"]
     if dish_source_dets:
         return max(dish_source_dets, key=lambda d: d.mask_area_ratio * d.score)
 
-    # Priority 2: COCO detections that are composite dishes
+    # 2: dari COCO yang merupakan hidangan utuh
     coco_dish_dets = [d for d in detections if d.label_source == "coco" and d.label in COCO_DISH_LABELS]
     if coco_dish_dets:
         return max(coco_dish_dets, key=lambda d: d.score)
 
-    # Priority 3: largest detection by mask area
+    # 3: ambil yang area mask-nya paling besar
     if detections:
         return max(detections, key=lambda d: d.mask_area_ratio)
     return None
@@ -213,8 +197,8 @@ def _find_dish_detection(detections: list[Detection]) -> Optional[Detection]:
 
 def _collect_hidden_ingredients(detections: list[Detection]) -> list[str]:
     """
-    Collect hidden ingredients from ALL dish-type detections.
-    De-duplicated and sorted for consistent output.
+    Kumpulkan bahan tersembunyi dari semua deteksi bertipe "dish".
+    Hasilnya di-deduplikasi dan diurutkan.
     """
     hidden = set()
     for det in detections:
@@ -223,9 +207,7 @@ def _collect_hidden_ingredients(detections: list[Detection]) -> list[str]:
     return sorted(hidden)
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Main analysis entry point
-# ══════════════════════════════════════════════════════════════════════
+# ── fungsi utama ────────────────────────────────────────────────────
 
 def analyze_meal(
     image_bytes: bytes,
@@ -239,9 +221,8 @@ def analyze_meal(
     ext: str = ".jpg",
 ) -> MealAnalysisResponse:
     """
-    Full meal analysis pipeline.
-
-    Returns a structured MealAnalysisResponse ready for JSON serialization.
+    Jalankan seluruh pipeline analisis makanan.
+    Return MealAnalysisResponse yang siap di-serialize jadi JSON.
     """
     settings = get_settings()
 
